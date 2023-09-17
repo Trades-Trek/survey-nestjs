@@ -11,11 +11,7 @@ export class CreateUserDto {
   @IsNotEmpty()
   @IsString()
   @MaxLength(30)
-  firstName: string;
-  @IsNotEmpty()
-  @IsString()
-  @MaxLength(30)
-  lastName: string;
+  name: string;
 
   @IsNotEmpty()
   @IsString()
@@ -31,11 +27,9 @@ export class CreateUserDto {
   @IsString()
   password: string;
 
-  @IsNotEmpty()
-  @IsString()
-  confirmPassword: string;
-  @IsNotEmpty()
-  @IsString()
-  device: string;
+  // @IsNotEmpty()
+  // @IsString()
+  // confirmPassword: string;
+
   refferalCode:string;
 }

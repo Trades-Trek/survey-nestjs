@@ -102,11 +102,8 @@ export class UsersController {
 
   @Get('get/info')
   async userInfo(
-    @AuthUser('id') id: string,
-    @Query('gameId') gameId: string,
-    @Query('device') device: string,
-  ) {
-    return await this.userService.userInfo(id, gameId, device);
+    @AuthUser('id') id: string  ) {
+    return await this.userService.userInfo(id);
   }
   @Get('timestamp')
   async updateTimeStamp(@AuthUser('id') id: string) {

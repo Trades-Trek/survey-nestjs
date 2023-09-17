@@ -7,10 +7,9 @@ import * as mongoosePaginate from 'mongoose-paginate';
 
 @Schema({ timestamps: true })
 export class User {
+
   @Prop({ required: true, trim: true })
-  firstName: string;
-  @Prop({ required: true, trim: true })
-  lastName: string;
+  name: string;
 
   @Prop({ unique: true, trim: true })
   email: string;
@@ -56,8 +55,6 @@ export class User {
   allowNotification: boolean
   @Prop({ default: 'https://firebasestorage.googleapis.com/v0/b/jambapp-3e437.appspot.com/o/default-user-avatar.png?alt=media&token=e58679af-a9e8-4d91-b8f5-4587be5dc714'})
   profilePic: string;
-  @Prop({required:true,unique:true})
-  userId: string;
   @Prop()
   lastSeen: Date
 }

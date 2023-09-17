@@ -292,8 +292,8 @@ function sendTransacEmail({ to, subject, htmlContent }) {
 
   const data = {
     From: {
-      name: "Trades Trek",
-      email: "info@tradestrek.com",
+      name: "Nat surveys",
+      email: "natsurveys@gmail.com",
     },
     To: [
       {
@@ -328,8 +328,24 @@ function sendTransacEmail({ to, subject, htmlContent }) {
 export const successfulSignupMessage = (emailDetails) => {
   sendTransacEmail({
     to: emailDetails.email,
-    subject: "Welcome to Trades Trek",
-    htmlContent: constructHTML(emailDetails),
+    subject: "Welcome to Nat surveys",
+    htmlContent: `
+    <div style='height: 300px;
+    width: 550px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: #f1f3f4'>
+    <p style='padding: 123px 20px;
+    color: black;'
+    >
+    Thank you for signing up with Nat surveys. We’re excited to have you on board
+    </p>
+    
+    </div>
+   
+            `,
   });
 };
 
@@ -352,9 +368,25 @@ export const sendPasswordResetSuccessEmail = (emailDetails) => {
 export const SendEmail = (emailDetails) => {
   const { type, code, title, email } = emailDetails;
   sendTransacEmail({
-    to: emailDetails.email,
+    to: email,
     subject: "Verify your email",
-    htmlContent: constructHTML({ type, code, title }),
+    htmlContent:  `
+    <div style='height: 300px;
+    width: 550px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: #f1f3f4'>
+    <p style='padding: 123px 20px;
+    color: black;'
+    >
+    Hello from, Nat surveys Your one-time-password(OTP) is ${code}, Kindly do not share it with someone.
+    </p>
+    
+    </div>
+   
+            `,
   });
 };
 export const subscriptionRemainder = (email, date) => {
