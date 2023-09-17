@@ -11,6 +11,7 @@ async function bootstrap() {
   const whiteList = [
     'http://localhost:3000',
     'http://localhost:3001',
+    'https://survey-backend-ae87.onrender.com'
   ];
   app.enableCors({
     origin: function (origin, callback) {
