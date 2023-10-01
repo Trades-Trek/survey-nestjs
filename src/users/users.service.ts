@@ -35,7 +35,7 @@ import {
 } from '../helpers/NegerianTimeZone';
 import * as PaginateModel from 'mongoose-paginate';
 import { updateSubscriptionDto } from './dto/update-subscription';
-
+import { BankAccount } from '../bank/schema/bank.schema';
 import { NegerianDateZone } from 'src/helpers/NegerianTimeZone';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { UserRefferal } from 'src/userrefferal/schema/userrefferal.schema';
@@ -56,7 +56,7 @@ export class UsersService {
     @InjectModel('User') private userModel: Model<User>,
     @InjectModel('UserTimeStamp')
     private userTimeStampModel: Model<UserTimeStamp>,
-
+    @InjectModel('BankAccount') private bankAccountModel: Model<BankAccount>,
     @InjectModel('Otp') private otpModel: Model<Otp>,
     @InjectModel('UserProfile') private userProfileModel: Model<UserProfile>,
     @InjectModel('Notification')
@@ -75,6 +75,43 @@ export class UsersService {
   @Cron('0 0 * * * *')
   EVERY_Day_midnight() {
     this.deleteUserlogs();
+  }
+
+  async userInfo(id: string) {
+    try {
+      const user = await this.userModel
+        .findByIdAndUpdate(
+          id,
+          { lastSeen: new Date() },
+          { $new: true },
+        )
+        .select('-password');
+
+      let today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+
+      if (!user) {
+        return {
+          success: false,
+          message: 'User does not exists',
+        };
+      }
+
+      const userBankDetails = await this.bankAccountModel.find({
+        userId: id
+      })
+      
+      return {
+        success: true,
+        data: { user, userBankDetails: userBankDetails.length ? userBankDetails : null   },
+      };
+
+    } catch (err) {
+      return {
+        success: false,
+        message: err.message,
+      };
+    }
   }
 
   async deleteUserlogs() {
@@ -397,14 +434,10 @@ export class UsersService {
         secret: ENV.JWT_SECRET_KEY,
       });
 
-      // this.eventEmitter.emit('logs', {
-      //   userId: user.id,
-      //   username: user.username,
-      //   appFeature: 'Authentication',
-      //   userAction: 'login',
-      //   status: 'Success',
-      // });
-
+      const userBankDetails = await this.bankAccountModel.find({
+        userId: user.id
+      })
+      
       return {
         success: true,
         message: 'User login successfully',
@@ -412,6 +445,7 @@ export class UsersService {
           .findOne({ email: user.email })
           .select('-password'),
         token: token,
+        userBankDetails: userBankDetails.length ? userBankDetails : null 
       };
     } catch (err) {
       return {
@@ -883,37 +917,6 @@ export class UsersService {
     return await this.userTimeStampModel.create({ userId: id });
   }
 
-  async userInfo(id: string) {
-    try {
-      const user = await this.userModel
-        .findByIdAndUpdate(
-          id,
-          { lastSeen: new Date() },
-          { $new: true },
-        )
-        .select('-password');
-
-      let today = new Date();
-      today.setUTCHours(0, 0, 0, 0);
-
-      if (!user) {
-        return {
-          success: false,
-          message: 'User does not exists',
-        };
-      } else {
-        return {
-          success: true,
-          data: { user },
-        };
-      }
-    } catch (err) {
-      return {
-        success: false,
-        message: err.message,
-      };
-    }
-  }
 
   async deleteOtpAfterFifteenMinutes() {
     const otps = await this.otpModel.find();

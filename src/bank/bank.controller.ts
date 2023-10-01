@@ -1,18 +1,22 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, Post, Body, Param, Res } from '@nestjs/common';
 import { BankService } from './bank.service';
+import { CreateBankAccountDto } from './bank.dto';
+import { BankAccount } from './schema/bank.schema';
+import { AuthUser } from 'src/users/middleware/auth.decorator';
 
 @Controller('bank')
 export class BankController {
   constructor(private readonly bankService: BankService) {}
 
 
-  @Get()
-  findAll() {
-    return this.bankService.findAll();
+  @Get(':id')
+  async getOne(@Param('id') id: string) {
+    return await this.bankService.getOne(id);
   }
 
-  @Get('verifyAccount')
-  verifyAccount(@Query('account_number') accountNumber: number, @Query('bank_code') bankCode: number) {
-    return this.bankService.verifyAccount(accountNumber, bankCode);
+  @Post()
+  async create( @AuthUser('id') id: string , @Body() createBankAccountDto: CreateBankAccountDto, @Res() res): Promise<BankAccount> {
+   const createdBankAccount = await this.bankService.create(createBankAccountDto, id);
+    return res.status(201).json( createdBankAccount);
   }
 }

@@ -18,12 +18,14 @@ import { AuthUserMiddleware } from './users/middleware/auth.user.middleware';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthAdminMiddleware } from './admin/middleware/auth.admin.middleware';
 import { ScheduleModule } from '@nestjs/schedule';
-
+import { SurveyModule } from './survey/survey.module'
 import { NotificationsModule } from './notifications/notifications.module';
 import { UserrefferalModule } from './userrefferal/userrefferal.module';
 import { AdminrefferalperModule } from './adminrefferalper/adminrefferalper.module';
 import { ControlSchema } from './admin/schema/control.schema';
 import { BankModule } from './bank/bank.module';
+
+
 
 @Module({
   imports: [
@@ -33,6 +35,7 @@ import { BankModule } from './bank/bank.module';
       { name: 'Control', schema: ControlSchema },
     ]),
     EventEmitterModule.forRoot(),
+    SurveyModule,
     LoggingModule,
     UsersModule,
     AdminModule,

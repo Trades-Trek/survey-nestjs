@@ -1,32 +1,39 @@
 import { Injectable } from '@nestjs/common';
-import { PayStackSecret } from 'src/helpers/User_Type';
-import axios from 'axios';
-
-const options = {
-  headers: {
-    Authorization: `Bearer ${PayStackSecret}`,
-  },
-};
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { CreateBankAccountDto } from './bank.dto';
+import { BankAccount } from './schema/bank.schema';
 
 @Injectable()
 export class BankService {
-  async findAll() {
-  
-    const { data } = await axios.get(
-      `https://api.paystack.co/bank?country=nigeria`,
-      options,
-    );
+  constructor(
+    @InjectModel('BankAccount') private bankAccountModel: Model<BankAccount>,
+  ) {}
 
-    return data;
+  async getAll(): Promise<BankAccount[]> {
+    return await this.bankAccountModel.find();
   }
 
-  async verifyAccount(account_number: number, bank_code: number) {
+  async getOne(id: string) {
+    const data = await this.bankAccountModel.findById(id);
 
-    const response = await axios.get(
-      `https://api.paystack.co/bank/resolve?account_number=${account_number}&bank_code=${bank_code}`,
-      options,
-    );
+    return {
+      success: true,
+      message: `Bank details`,
+      data,
+    };
+  }
 
-    return response.data;
+  async create(createBankAccountDto: CreateBankAccountDto, id) {
+    const data = await this.bankAccountModel.create({...createBankAccountDto, userId: id });
+    return {
+      success: true,
+      message: `Bank created`,
+      data,
+    };
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.bankAccountModel.findByIdAndDelete(id);
   }
 }

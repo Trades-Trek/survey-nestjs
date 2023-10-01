@@ -8,7 +8,7 @@ import { UserSchema } from './schema/user.schema';
 import { UserProfileSchema } from './schema/userProfile.schema';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-
+import { BankAccountSchema } from 'src/bank/schema/bank.schema'
 import { NotificationSchema } from 'src/notifications/schema/notification.schama';
 import { UserRefferalSchema } from 'src/userrefferal/schema/userrefferal.schema';
 import { ControlSchema } from 'src/admin/schema/control.schema';
@@ -21,7 +21,7 @@ import { UserTimeStamp, UserTimeStampSchema } from './schema/userlog.schema';
       { name: 'UserTimeStamp', schema: UserTimeStampSchema },
      { name: 'Otp', schema: OtpSchema },
       { name: 'UserProfile', schema: UserProfileSchema },
-
+      { name: "BankAccount", schema: BankAccountSchema },
       {name:'Notification',schema:NotificationSchema},
       {name:'UserRefferal',schema:UserRefferalSchema},
       { name: 'Control', schema: ControlSchema },

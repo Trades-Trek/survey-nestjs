@@ -35,6 +35,11 @@ export class User {
   @Prop({ default: '' })
   phone: string;
 
+  @Prop({ default: '' })
+  country: string;
+
+  @Prop({ enum: ['Premium', 'Standard', 'Basic', 'free'], trim: true, default: 'free' })
+  subscriptionCategory: string;
 
   @Prop({ default: false })
   block: boolean;
