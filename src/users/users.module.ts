@@ -13,11 +13,14 @@ import { NotificationSchema } from 'src/notifications/schema/notification.schama
 import { UserRefferalSchema } from 'src/userrefferal/schema/userrefferal.schema';
 import { ControlSchema } from 'src/admin/schema/control.schema';
 import { UserTimeStamp, UserTimeStampSchema } from './schema/userlog.schema';
-
+import { SurveyBalanceSchema } from 'src/users/schema/userSurveyBalance.schema'
+import { ReferralBalanceSchema } from 'src/users/schema/userReferralBalance.schema'
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: 'User', schema: UserSchema },
+      { name: 'ReferralBalance', schema: ReferralBalanceSchema },
+      { name: "SurveyBalance", schema:  SurveyBalanceSchema},
       { name: 'UserTimeStamp', schema: UserTimeStampSchema },
      { name: 'Otp', schema: OtpSchema },
       { name: 'UserProfile', schema: UserProfileSchema },

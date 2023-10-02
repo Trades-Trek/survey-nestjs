@@ -41,8 +41,9 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { UserRefferal } from 'src/userrefferal/schema/userrefferal.schema';
 import { Control } from 'src/admin/schema/control.schema';
 import { InvoiceIncrement, UserIdIncrement } from 'src/helpers/Increment';
-
+import { SurveyBalance } from 'src/users/schema/userSurveyBalance.schema';
 import { UserTimeStamp } from './schema/userlog.schema';
+import { ReferralBalance } from 'src/users/schema/userReferralBalance.schema';
 
 const fs = require('fs');
 
@@ -54,6 +55,10 @@ function capitalizeFirstLetter(string) {
 export class UsersService {
   constructor(
     @InjectModel('User') private userModel: Model<User>,
+    @InjectModel('SurveyBalance')
+    private readonly SurveyBalanceModel: Model<SurveyBalance>,
+    @InjectModel('ReferralBalance')
+    private readonly ReferralBalanceModel: Model<ReferralBalance>,
     @InjectModel('UserTimeStamp')
     private userTimeStampModel: Model<UserTimeStamp>,
     @InjectModel('BankAccount') private bankAccountModel: Model<BankAccount>,
@@ -80,11 +85,7 @@ export class UsersService {
   async userInfo(id: string) {
     try {
       const user = await this.userModel
-        .findByIdAndUpdate(
-          id,
-          { lastSeen: new Date() },
-          { $new: true },
-        )
+        .findByIdAndUpdate(id, { lastSeen: new Date() }, { $new: true })
         .select('-password');
 
       let today = new Date();
@@ -98,14 +99,33 @@ export class UsersService {
       }
 
       const userBankDetails = await this.bankAccountModel.find({
-        userId: id
-      })
-      
+        userId: id,
+      });
+
+      const results = await this.SurveyBalanceModel.find({ userId: id });
+      const totalSurveyBalance = results.reduce(
+        (sum, item) => sum + item.balance,
+        0,
+      );
+
+      const userRefferalsData = await this.ReferralBalanceModel.find({
+        userWhoReffered: id,
+      });
+
+      const totalUserRefferalBalance = userRefferalsData.reduce(
+        (sum, item) => sum + item.balance,
+        0,
+      );
+
       return {
         success: true,
-        data: { user, userBankDetails: userBankDetails.length ? userBankDetails : null   },
+        data: {
+          user,
+          totalBalance: totalSurveyBalance,
+          totalRefferalBalance: totalUserRefferalBalance,
+          userBankDetails: userBankDetails.length ? userBankDetails : null,
+        },
       };
-
     } catch (err) {
       return {
         success: false,
@@ -239,17 +259,23 @@ export class UsersService {
     }
   }
 
+  //my referral code needs to sit in userrefferalModel for other use to use
+  //
   async signUpBakup(createUserDto: CreateUserDto) {
     try {
+      let isUserSigningThroughRefferal = false;
+      let userWhoReffered = { _id: '' };
       if (createUserDto.refferalCode != '') {
-        const ref = await this.userrefferalModel.findOne({
-          refferalCode: createUserDto.refferalCode,
+        userWhoReffered = await this.userModel.findOne({
+          yourRefferal: createUserDto.refferalCode,
         });
-        if (!ref) {
+        if (!userWhoReffered) {
           return {
             success: false,
             message: 'Refferal code is not valid',
           };
+        } else {
+          isUserSigningThroughRefferal = true;
         }
       }
 
@@ -264,12 +290,16 @@ export class UsersService {
         };
       }
 
-      // if (createUserDto.password !== createUserDto.confirmPassword) {
-      //   return {
-      //     success: false,
-      //     message: 'Password and confirm password does not match',
-      //   };
-      // }
+      const username = await this.userModel.findOne({
+        username: createUserDto.username?.toLowerCase(),
+      });
+
+      if (username) {
+        return {
+          success: false,
+          message: 'Username has been chosen',
+        };
+      }
 
       const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
       createUserDto.password = hashedPassword;
@@ -279,47 +309,25 @@ export class UsersService {
       const joinDate = new Date();
       joinDate.setUTCHours(0, 0, 0, 0);
 
-      const reffer = await this.userrefferalModel.findOne({
-        email: createUserDto.email.toLowerCase(),
-        refferalCode: createUserDto.refferalCode,
-      });
-
-      let refferalCode = '';
-      if (reffer) {
-        await this.userrefferalModel.findOneAndUpdate(
-          {
-            email: createUserDto.email.toLowerCase(),
-            refferalCode: createUserDto.refferalCode,
-          },
-          {
-            $set: {
-              joined: true,
-            },
-          },
-        );
-        refferalCode = createUserDto.refferalCode;
-      } else if (createUserDto.refferalCode != '') {
-        const refUser = await this.userrefferalModel.findOne({
-          refferalCode: createUserDto.refferalCode,
-        });
-        await this.userrefferalModel.create({
-          email: createUserDto.email.toLowerCase(),
-          refferalCode: createUserDto.refferalCode,
-          userId: refUser.userId,
-          joined: true,
-        });
-      }
-      delete createUserDto.refferalCode;
-
       const newUser = await new this.userModel({
         ...createUserDto,
         email: createUserDto.email.toLowerCase(),
         username: createUserDto.username.toLowerCase(),
-        joinedRefferal: refferalCode,
-        yourRefferal: `${createUserDto.username}${Math.floor(
-          10 + Math.random() * 90,
-        )}`,
+        joinedRefferal: isUserSigningThroughRefferal
+          ? createUserDto.refferalCode
+          : '',
+        yourRefferal: `${createUserDto.username}${Math.random()
+          .toString(36)
+          .substring(7)}`,
       }).save();
+
+      if (isUserSigningThroughRefferal) {
+        await new this.ReferralBalanceModel({
+          userWhoReffered: userWhoReffered._id,
+          userUsingReferral: newUser._id,
+          balance: 10,
+        }).save();
+      }
 
       const otp = Math.floor(1000 + Math.random() * 9000);
 
@@ -425,7 +433,7 @@ export class UsersService {
             .select('-password'),
         };
       }
-   
+
       const payload = {
         id: user.id,
         user_type: 'user',
@@ -435,9 +443,21 @@ export class UsersService {
       });
 
       const userBankDetails = await this.bankAccountModel.find({
-        userId: user.id
-      })
-      
+        userId: user.id,
+      });
+
+      const results = await this.SurveyBalanceModel.find({ userId: user.id });
+      const totalBalance = results.reduce((sum, item) => sum + item.balance, 0);
+
+      const userRefferalsData = await this.ReferralBalanceModel.find({
+        userWhoReffered: user.id,
+      });
+
+      const totalUserRefferalBalance = userRefferalsData.reduce(
+        (sum, item) => sum + item.balance,
+        0,
+      );
+
       return {
         success: true,
         message: 'User login successfully',
@@ -445,7 +465,9 @@ export class UsersService {
           .findOne({ email: user.email })
           .select('-password'),
         token: token,
-        userBankDetails: userBankDetails.length ? userBankDetails : null 
+        totalBalance,
+        totalRefferalBalance: totalUserRefferalBalance,
+        userBankDetails: userBankDetails.length ? userBankDetails : null,
       };
     } catch (err) {
       return {
@@ -916,7 +938,6 @@ export class UsersService {
   async updateTimeStamp(id: string) {
     return await this.userTimeStampModel.create({ userId: id });
   }
-
 
   async deleteOtpAfterFifteenMinutes() {
     const otps = await this.otpModel.find();
