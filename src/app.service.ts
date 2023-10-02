@@ -24,6 +24,6 @@ export class AppService implements OnModuleInit {
     }
   }
   getHello(): string {
-    return 'Nat survey on vercel is alive and well';
+    return 'Nat survey is alive and well(vercel)';
   }
 }
