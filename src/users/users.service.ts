@@ -11,7 +11,6 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { Otp } from './schema/otp.schema';
 import { VerifyEmailDto } from './dto/otp-user.dto';
-import { Cron } from '@nestjs/schedule';
 import { ForgotPasswordResetDto } from './dto/forgot-password-input.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ENV } from 'config/environment';
@@ -73,14 +72,7 @@ export class UsersService {
     @InjectModel('Control') private controlModel: Model<Control>,
   ) {}
 
-  @Cron('*/15 * * * * *')
-  EVERY_FIFTEEN_MINTUES_DELETE_OTP() {
-    this.deleteOtpAfterFifteenMinutes();
-  }
-  @Cron('0 0 * * * *')
-  EVERY_Day_midnight() {
-    this.deleteUserlogs();
-  }
+
 
   async userInfo(id: string) {
     try {
