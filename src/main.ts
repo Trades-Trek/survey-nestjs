@@ -8,16 +8,13 @@ import { AppModule } from './app.module';
 const express = require('express');
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const whiteList = [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'https://survey-backend-ae87.onrender.com'
-  ];
+
   app.enableCors({
     origin: [
       'http://localhost:3000',
       'http://localhost:3001',
-      'https://survey-backend-ae87.onrender.com'
+      'https://nats-survey.vercel.app',
+      'https://nats-survey.vercel.app/',
     ],
     methods: 'GET, HEAD, PUT, POST, DELETE, OPTIONS, PATCH',
     credentials: true,
