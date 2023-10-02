@@ -14,19 +14,15 @@ async function bootstrap() {
     'https://survey-backend-ae87.onrender.com'
   ];
   app.enableCors({
-    origin: function (origin, callback) {
-      if (whiteList.indexOf(origin) >= 0 || !origin) {
-        if (origin != '') {
-          callback(null, true);
-        }
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://survey-backend-ae87.onrender.com'
+    ],
+    methods: 'GET, HEAD, PUT, POST, DELETE, OPTIONS, PATCH',
     credentials: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
+    allowedHeaders:
+      'Origin, X-Requested-With, Content-Type, Accept, Authentication, Access-control-allow-credentials, Access-control-allow-headers, Access-control-allow-methods, Access-control-allow-origin, User-Agent, Referer, Accept-Encoding, Accept-Language, Access-Control-Request-Headers, Cache-Control, Pragma',
   });
   app.use('/uploads', express.static('uploads'));
   app.useGlobalPipes(new ValidationPipe());
