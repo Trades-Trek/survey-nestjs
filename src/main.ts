@@ -9,9 +9,19 @@ const express = require('express');
 async function bootstrap() {
   const app = await NestFactory.create(AppModule,{
 
-    cors:true
-    
+    cors: {
+      origin: 'https://nats-survey.vercel.app',
+      credentials: true,
+    }
     })
+  app.use('/uploads', express.static('uploads'));
+  app.useGlobalPipes(new ValidationPipe());
+  await app.listen(ENV.PORT);
+  
+}
+bootstrap();
+
+
   // app.enableCors({
   //   origin: [
   //     'http://localhost:3000',
@@ -26,10 +36,3 @@ async function bootstrap() {
   //     preflightContinue: true,
   //     optionsSuccessStatus: 200
   // });
-  app.use('/uploads', express.static('uploads'));
-  app.useGlobalPipes(new ValidationPipe());
-  await app.listen(ENV.PORT);
-  
-}
-bootstrap();
-
