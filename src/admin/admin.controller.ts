@@ -18,7 +18,7 @@ import { LoginAdminDto } from './dto/login.admin.dto';
 import { UpdateUserDto } from './dto/update.user.dto';
 import { AuthAdmin } from './middleware/auth.decorator';
 import { Admin } from './schema/admin.schema';
-@Controller('admin')
+@Controller('admin-nat-sur')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
   
@@ -28,11 +28,22 @@ export class AdminController {
     return await this.adminService.getUserLogs();
   }
 
+
+  @Get('pendingWithdrawalRequest')
+  @HttpCode(200)
+  async getPendingWithdrawalRequest(
+    @AuthAdmin('userId') userId: string,
+  ) {
+    return await this.adminService.getPendingWithdrawalRequest(userId);
+  }
+
+
   @Post('login')
   @HttpCode(200)
   async login(@Body() loginAdminDto: LoginAdminDto) {
     return await this.adminService.login(loginAdminDto);
   }
+
   @Get('resetPassword')
   @HttpCode(200)
   async resetPassword(@Query('email') email:string) {

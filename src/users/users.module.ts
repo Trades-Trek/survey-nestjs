@@ -15,10 +15,12 @@ import { ControlSchema } from 'src/admin/schema/control.schema';
 import { UserTimeStamp, UserTimeStampSchema } from './schema/userlog.schema';
 import { SurveyBalanceSchema } from 'src/users/schema/userSurveyBalance.schema'
 import { ReferralBalanceSchema } from 'src/users/schema/userReferralBalance.schema'
+import { WithdrawalRequestSchema } from './schema/userWithDrawal.schema'
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: 'User', schema: UserSchema },
+      { name: 'WithdrawalRequest', schema :  WithdrawalRequestSchema},
       { name: 'ReferralBalance', schema: ReferralBalanceSchema },
       { name: "SurveyBalance", schema:  SurveyBalanceSchema},
       { name: 'UserTimeStamp', schema: UserTimeStampSchema },

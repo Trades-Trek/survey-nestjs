@@ -12,6 +12,9 @@ export class ReferralBalance  extends Document {
 
   @Prop({ type: Number, required: true, default: 0 })
   balance: number;
+
+  @Prop({ type: Boolean, required: true, default: false })
+  withdrawn: boolean
 }
 
 export const ReferralBalanceSchema = SchemaFactory.createForClass(ReferralBalance);

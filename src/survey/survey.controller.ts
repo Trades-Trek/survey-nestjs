@@ -19,8 +19,6 @@ export class SurveyController {
     return res.status(201).json(createdSurvey);
   }
   
-  
-
   @Get()
   async getAllSurveys() {
     return await this.surveyService.getAllSurveys();

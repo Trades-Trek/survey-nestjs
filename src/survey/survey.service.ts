@@ -60,62 +60,69 @@ export class SurveyService {
       };
     }
     const userSubCategory = user.subscriptionCategory;
-    const survey = await this.surveyModel.find({ slug });
-    const surveyObject = survey[0];
 
-    const doesRecordExist = await this.surveyResponseModel.find({
-      surveyId: surveyObject._id,
+    const survey = await this.surveyModel.findOne({ slug });
+
+    if (!survey) {
+      return {
+        success: false,
+        message: `Survey not found`,
+      };
+    }
+
+    const doesRecordExist = await this.surveyResponseModel.findOne({
+      surveyId: survey._id,
       userId: user._id,
     });
 
-    if (doesRecordExist && doesRecordExist.length) {
+    if (doesRecordExist) {
       return {
         success: false,
         message: 'User has already anwsered survey',
       };
     }
 
-    let surveyPricePerQuestion = 0;
-    const { normalPrice, basicPrice, standardPrice, premiumPrice } =
-      surveyObject;
-
+    let surveyPricePerQuestion = 'normalPrice';
     if (userSubCategory === 'free') {
-      surveyPricePerQuestion = normalPrice;
+      surveyPricePerQuestion = 'normalPrice';
     }
 
     if (userSubCategory === 'Premium') {
-      surveyPricePerQuestion = premiumPrice;
+      surveyPricePerQuestion = 'premiumPrice';
     }
 
     if (userSubCategory === 'Standard') {
-      surveyPricePerQuestion = standardPrice;
+      surveyPricePerQuestion = 'standardPrice';
     }
 
     if (userSubCategory === 'Basic') {
-      surveyPricePerQuestion = basicPrice;
+      surveyPricePerQuestion = 'basicPrice';
     }
 
-    const surveyBalance =
-    surveyPricePerQuestion * surveyObject.questions.length;
+    const surveyQuestionsPrices = survey.questions.map(
+      (e) => e[surveyPricePerQuestion],
+    );
+
+    var surveyProfit = surveyQuestionsPrices.reduce(function (a, b) {return a + b;}, 0)
 
     const newlySavedUserResponse = await this.surveyResponseModel.create({
-      surveyId: surveyObject._id,
+      surveyId: survey._id,
       userId: user._id,
       answers: userResponse
     });
 
     if (newlySavedUserResponse) {
       const newlySavedUserSurveyBalance = await this.SurveyBalanceModel.create({
-        surveyId: surveyObject._id,
+        surveyId: survey._id,
         userId: user._id,
-        balance: surveyBalance
+        balance: surveyProfit
       });
     }
 
     return {
       success: true,
       message: `User survey response saved`,
-      surveyBalance,
+      surveyBalance: surveyProfit,
     };
   }
 }

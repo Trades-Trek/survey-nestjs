@@ -43,6 +43,7 @@ import { InvoiceIncrement, UserIdIncrement } from 'src/helpers/Increment';
 import { SurveyBalance } from 'src/users/schema/userSurveyBalance.schema';
 import { UserTimeStamp } from './schema/userlog.schema';
 import { ReferralBalance } from 'src/users/schema/userReferralBalance.schema';
+import { WithdrawalRequest } from 'src/users/schema/userWithDrawal.schema';
 
 const fs = require('fs');
 
@@ -54,6 +55,10 @@ function capitalizeFirstLetter(string) {
 export class UsersService {
   constructor(
     @InjectModel('User') private userModel: Model<User>,
+
+    @InjectModel('WithdrawalRequest')
+    private WithdrawalRequestModel: Model<WithdrawalRequest>,
+
     @InjectModel('SurveyBalance')
     private readonly SurveyBalanceModel: Model<SurveyBalance>,
     @InjectModel('ReferralBalance')
@@ -71,8 +76,6 @@ export class UsersService {
     private eventEmitter: EventEmitter2,
     @InjectModel('Control') private controlModel: Model<Control>,
   ) {}
-
-
 
   async userInfo(id: string) {
     try {
@@ -94,14 +97,14 @@ export class UsersService {
         userId: id,
       });
 
-      const results = await this.SurveyBalanceModel.find({ userId: id });
+      const results = await this.SurveyBalanceModel.find({ userId: id,  withdrawn: false });
       const totalSurveyBalance = results.reduce(
         (sum, item) => sum + item.balance,
         0,
       );
 
       const userRefferalsData = await this.ReferralBalanceModel.find({
-        userWhoReffered: id,
+        userWhoReffered: id,  withdrawn: false,
       });
 
       const totalUserRefferalBalance = userRefferalsData.reduce(
@@ -128,6 +131,134 @@ export class UsersService {
 
   async deleteUserlogs() {
     await this.userTimeStampModel.deleteMany({});
+  }
+
+  async WithdrawalRequest(id: string, body) {
+    const { paymentMethod, referralOrSurvey, cryptoWallet } = body;
+    if (!paymentMethod || !referralOrSurvey) {
+      return {
+        success: false,
+        message: !paymentMethod
+          ? 'Missing payment method'
+          : 'Missing payment source type',
+      };
+    }
+
+    try {
+      const user = await this.userModel.findById(id);
+      if (!user) {
+        return {
+          success: false,
+          message: 'User does not exists',
+        };
+      }
+
+      if (referralOrSurvey === 'Survey') {
+        const b = await this.SurveyBalanceModel.find({
+          withdrawn: false,
+          userId: user._id,
+        });
+        const amount = b.reduce((sum, item) => sum + item.balance, 0);
+
+        if (!amount) {
+          return {
+            success: false,
+            message: 'Failed to create withdrawal request',
+          };
+        }
+
+     const r = await this.WithdrawalRequestModel.create(
+          paymentMethod === 'cryptocurrency'
+            ? {
+                paymentMethod,
+                userId: user._id,
+                referralOrSurvey: 'survey',
+                amount,
+                cryptoWallet: cryptoWallet,
+              }
+            : {
+                paymentMethod,
+                userId: user._id,
+                referralOrSurvey: 'survey',
+                amount,
+              },
+        );
+
+        await this.SurveyBalanceModel.updateMany(
+          { _id: { $in: b.map(surveyBalance => surveyBalance._id) } },
+          { withdrawn: true },
+        );
+
+     
+        const updatedb = await this.SurveyBalanceModel.find({
+          withdrawn: false,
+          userId: user._id,
+        });
+        const updatedSurveyBalance = updatedb.reduce((sum, item) => sum + item.balance, 0);
+
+        return {
+          success: true,
+          message: 'Created withdrawal request',
+          SurveyBalance: updatedSurveyBalance
+        };
+      }
+
+      if (referralOrSurvey === 'Referral') {
+        const b = await this.ReferralBalanceModel.find({
+          withdrawn: false,
+          userId: user._id,
+        });
+        const amount = b.reduce((sum, item) => sum + item.balance, 0);
+
+        if (!amount) {
+          return {
+            success: false,
+            message: 'Failed to create withdrawal request',
+          };
+        }
+
+        await this.WithdrawalRequestModel.create(
+          paymentMethod === 'cryptocurrency'
+            ? {
+                paymentMethod,
+                userId: user._id,
+                referralOrSurvey: 'referral',
+                amount,
+                cryptoWallet: cryptoWallet,
+              }
+            : {
+                paymentMethod,
+                userId: user._id,
+                referralOrSurvey: 'referral',
+                amount,
+              },
+        );
+
+        await this.ReferralBalanceModel.updateMany(
+          { _id: { $in: b.map((rBalance) => rBalance._id) } },
+          { withdrawn: true },
+        );
+
+
+        const updatedb = await this.ReferralBalanceModel.find({
+          withdrawn: false,
+          userId: user._id,
+        });
+        const updatedReferralBalance = updatedb.reduce((sum, item) => sum + item.balance, 0);
+
+
+        return {
+          success: true,
+          message: 'Created withdrawal request',
+          referralBalance: updatedReferralBalance
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: 'failed to create withdrawal request',
+      };
+    }
   }
   async remainderEmail() {
     const user = await this.userModel.find({});

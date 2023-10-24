@@ -8,7 +8,7 @@ export class TransactionController {
           constructor(private transactionService: TransactionService) { }
           @Post('')
           async addTransaction(@AuthUser('userId') userId: string,@Body() body) {
-                    return await this.transactionService.addTransaction(userId, body)
+                    // return await this.transactionService.addTransaction(userId, body)
           }
           @Get('')
           async getUserTransaction(@AuthUser('userId') userId: string) {

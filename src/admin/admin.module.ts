@@ -23,13 +23,13 @@ import { ControlSchema } from './schema/control.schema';
 
 import { UserTimeStampSchema } from 'src/users/schema/userlog.schema';
 import { OtpSchema } from 'src/users/schema/otp.schema';
-
+import { WithdrawalRequestSchema } from 'src/users/schema/userWithDrawal.schema'
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: 'Admin', schema: AdminSchema },
       { name: 'UserTimeStamp', schema: UserTimeStampSchema },
-
+      { name: 'WithdrawalRequest', schema :  WithdrawalRequestSchema},
       { name: 'User', schema: UserSchema },
 
       { name: 'Holiday', schema: HolidaySchema },

@@ -46,6 +46,14 @@ export class UsersController {
   async login(@Body() loginUserDto: LoginUserDto) {
     return await this.userService.login(loginUserDto);
   }
+
+
+  @Post('withdrawalRequest')
+  @HttpCode(200)
+  async WithdrawalRequest(  @AuthUser() id: string, @Body() body) {
+    return await this.userService.WithdrawalRequest(id,  body);
+  }
+
   @Post('resendOtp')
   @HttpCode(200)
   async generateOtp(@Body('email') email: string) {

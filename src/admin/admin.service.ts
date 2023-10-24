@@ -12,6 +12,7 @@ import * as PaginateModel from 'mongoose-paginate';
 import { UpdateUserDto } from './dto/update.user.dto';
 import axios from 'axios';
 import { gameCreateMessage, NegerianHour } from 'src/helpers/NegerianTimeZone';
+import { WithdrawalRequest } from 'src/users/schema/userWithDrawal.schema';
 
 import { Control } from './schema/control.schema';
 import { UserTimeStamp } from 'src/users/schema/userlog.schema';
@@ -23,20 +24,49 @@ import { LoggingService } from '../logging/logging.service';
 export class AdminService {
   constructor(
     @InjectModel('Admin') private adminModel: Model<Admin>,
+    @InjectModel('WithdrawalRequest')
+    private WithdrawalRequestModel: Model<WithdrawalRequest>,
     @InjectModel('User') private userModel: PaginateModel<User>,
     @InjectModel('Notification')
     private notificationModel: PaginateModel<Notification>,
     private loggingService: LoggingService,
-   @InjectModel('Control') private controlModel: Model<Control>,
-    @InjectModel('UserTimeStamp') private userTimeStampModel: Model<UserTimeStamp>,
+    @InjectModel('Control') private controlModel: Model<Control>,
+    @InjectModel('UserTimeStamp')
+    private userTimeStampModel: Model<UserTimeStamp>,
     @InjectModel('Otp') private otpModel: Model<Otp>,
 
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
-  async getUserLogs(){
-  
-    const data =  await this.loggingService.getLogs();
+  async getPendingWithdrawalRequest(userId) {
+    try {
+      const admin = await this.adminModel.findById(userId);
+      if (!admin) {
+        return {
+          success: false,
+          message: 'Authorization Failed',
+        };
+      }
+
+      const withdrawalRequest = await this.WithdrawalRequestModel.find({
+        status: 'awaiting_admin_approval',
+      });
+
+      return {
+        success: true,
+        message: 'Succesfully retrieved withdrawal request ',
+        data: withdrawalRequest,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Failed to retieve ',
+      };
+    }
+  }
+
+  async getUserLogs() {
+    const data = await this.loggingService.getLogs();
 
     try {
       return {
@@ -44,10 +74,7 @@ export class AdminService {
         success: true,
         message: 'User Logs retrieved',
       };
-
-    } catch (error) {
-      
-    }
+    } catch (error) {}
   }
   /////////////Login//////////////
   async login(loginAdminDto: LoginAdminDto) {
@@ -67,7 +94,7 @@ export class AdminService {
       if (!admin) {
         return {
           success: false,
-          message: 'Admin not found',
+          message: 'Access denied',
         };
       }
       const isMatch = await bcrypt.compare(
@@ -86,7 +113,7 @@ export class AdminService {
       };
       const token = await this.jwtService.sign(payload, {
         secret: ENV.JWT_SECRET_KEY,
-        expiresIn: '30days'
+        expiresIn: '30days',
       });
       return {
         success: true,
@@ -101,7 +128,7 @@ export class AdminService {
     }
   }
 
-  async resetPassword(email){
+  async resetPassword(email) {
     try {
       if (!email) {
         return {
@@ -110,9 +137,7 @@ export class AdminService {
         };
       }
       const admin = await this.adminModel.findOne({
-        $or: [
-          { email:email },
-        ],
+        $or: [{ email: email }],
       });
       if (!admin) {
         return {
@@ -120,17 +145,26 @@ export class AdminService {
           message: 'Admin not found',
         };
       }
-      const otpData = await this.otpModel.findOneAndDelete({ email: email?.toLowerCase() });
-     
-        const otp = Math.floor(1000 + Math.random() * 9000);
-        SendEmail({ type: 'verification-signup', code: otp, title: '', email:  email?.toLowerCase()});
-        const newOtp = await new this.otpModel({ email: email?.toLowerCase(), otp: otp });
-        await newOtp.save();
-        return {
-          success: true,
-          message: 'Otp sent',
-        };
-      
+      const otpData = await this.otpModel.findOneAndDelete({
+        email: email?.toLowerCase(),
+      });
+
+      const otp = Math.floor(1000 + Math.random() * 9000);
+      SendEmail({
+        type: 'verification-signup',
+        code: otp,
+        title: '',
+        email: email?.toLowerCase(),
+      });
+      const newOtp = await new this.otpModel({
+        email: email?.toLowerCase(),
+        otp: otp,
+      });
+      await newOtp.save();
+      return {
+        success: true,
+        message: 'Otp sent',
+      };
     } catch (error) {
       return {
         success: false,
@@ -138,7 +172,7 @@ export class AdminService {
       };
     }
   }
-  async otpVerify(email,otp){
+  async otpVerify(email, otp) {
     try {
       if (!email) {
         return {
@@ -147,10 +181,7 @@ export class AdminService {
         };
       }
       const admin = await this.adminModel.findOne({
-        $or: [
-          { email: email },
-         
-        ],
+        $or: [{ email: email }],
       });
       if (!admin) {
         return {
@@ -158,7 +189,10 @@ export class AdminService {
           message: 'Admin not found',
         };
       }
-      const isMatch = await this.otpModel.findOne({ email: email?.toLowerCase(),otp:otp });
+      const isMatch = await this.otpModel.findOne({
+        email: email?.toLowerCase(),
+        otp: otp,
+      });
       if (!isMatch) {
         return {
           success: false,
@@ -171,7 +205,7 @@ export class AdminService {
       };
       const token = await this.jwtService.sign(payload, {
         secret: ENV.JWT_SECRET_KEY,
-        expiresIn: '30days'
+        expiresIn: '30days',
       });
       return {
         success: true,
@@ -186,44 +220,45 @@ export class AdminService {
     }
   }
 
-
   /////////////////////Get Users List////////
   async getUsers(userId, page = 1, limit = 10, search, body) {
     try {
-      const admin = await this.adminModel.findById(userId)
+      const admin = await this.adminModel.findById(userId);
       if (!admin) {
         return {
           success: false,
-          message: 'Authorization Failed'
-        }
+          message: 'Authorization Failed',
+        };
       }
       const options = {
         page: Number(page),
         limit: Number(limit),
         sort: { ...body.option },
-
       };
 
-      const users = await this.userModel.paginate({
-        '$or': [
-          // {
-          //   firstName: { '$regex': `.*${search}.*`, '$options': 'i' }
-          // },
-          // {
-          //   lastName: { '$regex': `.*${search}.*`, '$options': 'i' }
-          // },
-          {
-            email: { '$regex': `.*${search}.*`, '$options': 'i' }
-          },
-          {
-            username: { '$regex': `.*${search}.*`, '$options': 'i' }
-          },
-          {
-            phone: { '$regex': `.*${search}.*`, '$options': 'i' }
-          },
-        ],
-        ...body.filter,
-      }, options);
+      const users = await this.userModel.paginate(
+        {
+          $or: [
+            // {
+            //   firstName: { '$regex': `.*${search}.*`, '$options': 'i' }
+            // },
+            // {
+            //   lastName: { '$regex': `.*${search}.*`, '$options': 'i' }
+            // },
+            {
+              email: { $regex: `.*${search}.*`, $options: 'i' },
+            },
+            {
+              username: { $regex: `.*${search}.*`, $options: 'i' },
+            },
+            {
+              phone: { $regex: `.*${search}.*`, $options: 'i' },
+            },
+          ],
+          ...body.filter,
+        },
+        options,
+      );
       return {
         success: true,
         users: users,
@@ -237,38 +272,39 @@ export class AdminService {
   }
   async downloadUsers(userId, search, body) {
     try {
-
-      const admin = await this.adminModel.findById(userId)
+      const admin = await this.adminModel.findById(userId);
       if (!admin) {
         return {
           success: false,
           message: 'Admin not found',
         };
       }
-      const users = await this.userModel.find({
-        '$or': [
-          // {
-          //   firstName: { '$regex': `.*${search}.*`, '$options': 'i' }
-          // },
-          // {
-          //   lastName: { '$regex': `.*${search}.*`, '$options': 'i' }
-          // },
-          {
-            email: { '$regex': `.*${search}.*`, '$options': 'i' }
-          },
-          {
-            username: { '$regex': `.*${search}.*`, '$options': 'i' }
-          },
-          {
-            phone: { '$regex': `.*${search}.*`, '$options': 'i' }
-          },
-        ],
-        ...body.filter,
-      }).sort({ ...body.option });
+      const users = await this.userModel
+        .find({
+          $or: [
+            // {
+            //   firstName: { '$regex': `.*${search}.*`, '$options': 'i' }
+            // },
+            // {
+            //   lastName: { '$regex': `.*${search}.*`, '$options': 'i' }
+            // },
+            {
+              email: { $regex: `.*${search}.*`, $options: 'i' },
+            },
+            {
+              username: { $regex: `.*${search}.*`, $options: 'i' },
+            },
+            {
+              phone: { $regex: `.*${search}.*`, $options: 'i' },
+            },
+          ],
+          ...body.filter,
+        })
+        .sort({ ...body.option });
       return {
         success: true,
         message: 'User Find Successfully',
-        data: users
+        data: users,
       };
     } catch (error) {
       return {
@@ -278,7 +314,6 @@ export class AdminService {
     }
   }
   async createUser(body) {
-
     try {
       const user = await this.userModel.findOne({
         $or: [
@@ -306,14 +341,12 @@ export class AdminService {
       body.email = body.email.trim();
       body.firstName = body.firstName.trim();
       body.lastName = body.lastName.trim();
-   
+
       const today = new Date();
 
-    const control = await this.controlModel.findOne({})
+      const control = await this.controlModel.findOne({});
 
-      const newUser = await new this.userModel({ ...body,  }).save();
-
-
+      const newUser = await new this.userModel({ ...body }).save();
 
       return {
         success: true,
@@ -321,8 +354,6 @@ export class AdminService {
         user: newUser,
       };
     } catch (err) {
-
-
       if (err.keyPattern.phone) {
         return {
           success: false,
@@ -371,7 +402,7 @@ export class AdminService {
       };
     }
   }
-  async changePassword(id,input) {
+  async changePassword(id, input) {
     try {
       const user = await this.adminModel.findById(id);
       if (!user) {
@@ -489,7 +520,6 @@ export class AdminService {
 
     updateUserDto: UpdateUserDto,
   ) {
-
     try {
       if (!userId) {
         return {
@@ -538,7 +568,6 @@ export class AdminService {
     }
   }
 
-
   ////////////////User Search//////////
   async userSearch(page = 1, limit = 10, name: string) {
     try {
@@ -569,12 +598,10 @@ export class AdminService {
     }
   }
 
-
   /////////////////////Delete User///////////
   async deleteUserById(id: string) {
     try {
       const user = await this.userModel.findByIdAndDelete(id);
-
 
       if (!user) {
         return {
@@ -593,6 +620,4 @@ export class AdminService {
       };
     }
   }
-
-
 }

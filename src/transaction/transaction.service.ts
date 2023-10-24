@@ -17,63 +17,6 @@ export class TransactionService {
 
   ) { }
 
-  async addTransaction(userId: string, body) {
-    try {
-
-      const user = await this.userModel.findById(userId)
-      if (!user) {
-        return {
-          success: false,
-          message: 'User not found!.'
-        }
-      }
-      if (user.walletAmount < body.reqAmount) {
-        return {
-          success: false,
-          message: 'Insufficient amount!.'
-        }
-      }
-      const bank = await this.bankModel.findOne({ userId: new mongoose.Types.ObjectId(user._id) })
-     
-      if (!bank) {
-        await this.bankModel.create({
-          accountName: body.accountName,
-          accountNumber: body.accountNumber,
-          bankName: body.bankName,
-          userId: user._id,
-        })
-      } else {
-        await this.bankModel.findByIdAndUpdate(bank._id, {
-          accountName: body.accountName,
-          accountNumber: body.accountNumber,
-          bankName: body.bankName,
-        })
-      }
-      await this.transactionModel.create({
-        accountName: body.accountName,
-        accountNumber: body.accountNumber,
-        bankName: body.bankName,
-        userId: user._id,
-        reqAmount: body.reqAmount
-      })
-      await this.userModel.findByIdAndUpdate(user._id, {
-        requestAmount: Number(body.reqAmount) + Number(user.requestAmount),
-        walletAmount: Number(user.walletAmount) - Number(body.reqAmount)
-      })
-      return {
-        success: true,
-        message: 'Request Send Successfully'
-      }
-
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message
-      }
-
-    }
-  }
-
   async getUserTransaction(userId: string) {
     try {
       const transaction = await this.transactionModel.find({ userId: userId }).sort({ updatedAt: -1 })

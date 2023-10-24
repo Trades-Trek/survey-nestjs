@@ -26,10 +26,12 @@ import { ControlSchema } from './admin/schema/control.schema';
 import { BankModule } from './bank/bank.module';
 
 
-
 @Module({
   imports: [
-    MongooseModule.forRoot(ENV.DB_URL),
+    // MongooseModule.forRoot(ENV.DB_URL),
+    MongooseModule.forRoot('mongodb://127.0.0.1:27017/netsurveys', {
+    
+    }),
     MongooseModule.forFeature([
       { name: 'Admin', schema: AdminSchema },
       { name: 'Control', schema: ControlSchema },

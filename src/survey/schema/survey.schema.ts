@@ -10,21 +10,13 @@ export class Survey extends Document {
   description: string;
 
   @Prop({ required: true })
-  normalPrice: number;
-
-  @Prop({ required: true })
-  basicPrice: number;
-
-  @Prop({ required: true })
-  standardPrice: number;
-
-  @Prop({ required: true })
-  premiumPrice: number;
-
-  @Prop({ required: true })
   questions: [{
     question: string;
     options: [string];
+    basicPrice: number;
+    normalPrice: number;
+    premiumPrice: number;
+    standardPrice: number;
   }];
 
   @Prop({ required: true, unique: true })
@@ -45,3 +37,7 @@ SurveySchema.pre('save', async function(next) {
 
   next();
 })
+
+
+
+

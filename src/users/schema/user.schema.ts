@@ -48,12 +48,6 @@ export class User {
   yourRefferal: string
   @Prop({ default: "" })
   joinedRefferal: string
-  @Prop({ default: 0 })
-  walletAmount: number
-  @Prop({ default: 0 })
-  requestAmount: number
-  @Prop({ default: 0 })
-  withdrawAmount: number
   @Prop({ enum: ["Browser", "Mobile", "Tablet"] ,default:"Browser"})
   device: string
   @Prop({ default: true })

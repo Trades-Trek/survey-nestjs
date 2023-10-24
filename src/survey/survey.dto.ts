@@ -16,16 +16,7 @@ class QuestionDto {
   @ArrayMinSize(1) // Ensure there is at least one option
   @IsString({ each: true }) // Ensure each option is a string
   options: string[];
-}
 
-export class SurveyDto {
-  @IsNotEmpty()
-  @IsString()
-  title: string;
-
-  @IsNotEmpty()
-  @IsString()
-  description: string;
 
   @IsNotEmpty()
   @IsNumber()
@@ -42,6 +33,16 @@ export class SurveyDto {
   @IsNotEmpty()
   @IsNumber()
   premiumPrice: number;
+}
+
+export class SurveyDto {
+  @IsNotEmpty()
+  @IsString()
+  title: string;
+
+  @IsNotEmpty()
+  @IsString()
+  description: string;
 
   @IsNotEmpty()
   @IsString()
