@@ -1,7 +1,6 @@
 /* eslint-disable prettier/prettier */
 const DEV = {
-  // DB_URL: 'mongodb://localhost:27017/netsurveys',
-  DB_URL: 'mongodb+srv://jkdjkbsjdbcuwbchkjdcwd:fdcZExD1wnVcv7bV@cluster0.elpsihy.mongodb.net/netsurveys?retryWrites=true&w=majority',
+  DB_URI: 'mongodb+srv://jkdjkbsjdbcuwbchkjdcwd:fdcZExD1wnVcv7bV@cluster0.elpsihy.mongodb.net/netsurveys?retryWrites=true&w=majority',
    DB_USER: '',
   DB_PASS: '',
   JWT_SECRET_KEY: 'thisissecretkey',
