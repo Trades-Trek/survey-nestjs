@@ -48,10 +48,24 @@ export class AdminService {
         };
       }
 
-      const withdrawalRequest = await this.WithdrawalRequestModel.find({
-        status: 'awaiting_admin_approval',
-      });
+      //   const withdrawalRequest = await this.WithdrawalRequestModel.find().populate({
+      //     path: 'userId',
+      //     select: 'email',
+      //     match: { paymentMethod: { $in: ['paypal', 'amazon_gift_card'] } },
+      //   })
 
+      //  const c  = await this.WithdrawalRequestModel.find({ paymentMethod: 'bank_account' }).populate('userId', 'bankAccount');
+
+      //  const d = await this.WithdrawalRequestModel.find({ paymentMethod: 'cryptocurrency' }).populate('userId', 'cryptoWallet');
+
+      const withdrawalRequest =
+        await this.WithdrawalRequestModel.find().populate({
+          // Populate the `user` field with the user document.
+          path: 'userId',
+          select: 'email', // Select the `email` field from the user document.
+        });
+
+      console.log(withdrawalRequest, '...withdrawalRequest....');
       return {
         success: true,
         message: 'Succesfully retrieved withdrawal request ',
@@ -65,6 +79,35 @@ export class AdminService {
     }
   }
 
+  async approvePendingWithdrawalRequest(body, userId) {
+    const { transactionId } = body;
+
+    try {
+      const admin = await this.adminModel.findById(userId);
+      if (!admin) {
+        return {
+          success: false,
+          message: 'Authorization Failed',
+        };
+      }
+
+        await this.WithdrawalRequestModel.findByIdAndUpdate(
+          transactionId,
+          { status: 'approved' },
+          { new: true },
+        );
+
+      return {
+        success: true,
+        message: 'Successfully aproved',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Failed to approv',
+      };
+    }
+  }
   async getUserLogs() {
     const data = await this.loggingService.getLogs();
 

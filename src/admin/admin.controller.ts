@@ -29,6 +29,12 @@ export class AdminController {
   }
 
 
+  @Post('approvePendingWithdrawalRequest')
+  @HttpCode(200)
+  async approvePendingWithdrawalRequest_(@Body() body, @AuthAdmin('userId') userId: string,) {
+    return await this.adminService.approvePendingWithdrawalRequest(body, userId);
+  }
+
   @Get('pendingWithdrawalRequest')
   @HttpCode(200)
   async getPendingWithdrawalRequest(

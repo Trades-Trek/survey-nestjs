@@ -569,11 +569,12 @@ export class UsersService {
         userId: user.id,
       });
 
-      const results = await this.SurveyBalanceModel.find({ userId: user.id });
+      const results = await this.SurveyBalanceModel.find({ userId: user.id, withdrawn: false });
       const totalBalance = results.reduce((sum, item) => sum + item.balance, 0);
 
       const userRefferalsData = await this.ReferralBalanceModel.find({
         userWhoReffered: user.id,
+        withdrawn: false
       });
 
       const totalUserRefferalBalance = userRefferalsData.reduce(

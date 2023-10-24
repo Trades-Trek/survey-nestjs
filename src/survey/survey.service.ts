@@ -119,10 +119,15 @@ export class SurveyService {
       });
     }
 
+    const results = await this.SurveyBalanceModel.find({ userId: user.id, withdrawn: false });
+    const totalSurveyBalance = results.reduce((sum, item) => sum + item.balance, 0);
+
+
     return {
       success: true,
       message: `User survey response saved`,
       surveyBalance: surveyProfit,
+      totalSurveyBalance,
     };
   }
 }
