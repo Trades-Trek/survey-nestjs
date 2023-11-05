@@ -26,9 +26,6 @@ export class User {
   @Prop({ default: 0, trim: true })
   status: number;
 
-  @Prop({ default: '' })
-  profileId: string;
-
   @Prop({ default: 0 })
   accountValue: number;
 
@@ -38,11 +35,18 @@ export class User {
   @Prop({ default: '' })
   country: string;
 
-  @Prop({ enum: ['Premium', 'Standard', 'Basic', 'free'], trim: true, default: 'free' })
+  @Prop({ enum: ['premium', 'standard', 'basic', 'free'], trim: true, default: 'free' })
   subscriptionCategory: string;
 
   @Prop({ default: false })
   block: boolean;
+
+  @Prop({ default: '' })
+  payment_intent: string;
+
+  @Prop({ default: '' })
+  payment_intent_client_secret: string;
+
 
   @Prop({ default: "" })
   yourRefferal: string

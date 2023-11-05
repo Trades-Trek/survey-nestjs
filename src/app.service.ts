@@ -4,12 +4,10 @@ import { InjectModel } from '@nestjs/mongoose/dist/common';
 import { Admin } from './admin/schema/admin.schema';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
-import { error } from 'console';
-
+ 
 const stripe = require('stripe')(
-  'sk_test_51O15AfKROfa3x9b7meSoqY9DdpwFnR6Njee8fdVudELF7Hotuu2UG5E8aIrEe1mNDzvkYFkJVxsqnEEv6YwFyaIW00TfRjhcmm',
+  'sk_test_51NGdH3D042ZsvsAiPZWvsRwNG1A71L03wtERzCJVvw443Hdkpq36wKHmrN9RzPlNIvmqyQ05lFXz7I4XuuGGNVVU00stTR5Law',
 );
-
 @Injectable()
 export class AppService implements OnModuleInit {
   constructor(@InjectModel('Admin') private adminModel: Model<Admin>) {}

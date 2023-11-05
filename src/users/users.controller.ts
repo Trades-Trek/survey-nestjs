@@ -54,6 +54,13 @@ export class UsersController {
     return await this.userService.WithdrawalRequest(id,  body);
   }
 
+  
+  @Post('upgradeSubscription')
+  @HttpCode(200)
+  async upgradeSubscription(  @AuthUser() id: string, @Body() body) {
+    return await this.userService.upgradeSubscription(id,  body);
+  }
+
   @Post('resendOtp')
   @HttpCode(200)
   async generateOtp(@Body('email') email: string) {

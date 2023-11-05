@@ -77,6 +77,54 @@ export class UsersService {
     @InjectModel('Control') private controlModel: Model<Control>,
   ) {}
 
+  async upgradeSubscription(id, body) {
+    try {
+      const user = await this.userModel.findById(id);
+      if (!user) {
+        return {
+          success: false,
+          message: 'User does not exists',
+        };
+      }
+
+      const {
+        payment_intent,
+        payment_intent_client_secret,
+        subscriptionCategory,
+      } = user;
+
+
+      if (
+        subscriptionCategory !== 'free' ||
+        payment_intent ||
+        payment_intent_client_secret
+      ) {
+        return {
+          success: false,
+          message: 'You have already suscribed to one of the existing plans',
+        };
+      }
+     await this.userModel.findByIdAndUpdate(
+        id,
+        { subscriptionCategory: body.sub, ...body },
+        { new: true },
+      );
+
+      const updatedUser = await this.userModel.findById(id).select({ password: 0 });
+      return {
+        success: true,
+        message: 'Successfully subscribed',
+        data: updatedUser
+      };
+
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
   async userInfo(id: string) {
     try {
       const user = await this.userModel
@@ -97,14 +145,18 @@ export class UsersService {
         userId: id,
       });
 
-      const results = await this.SurveyBalanceModel.find({ userId: id,  withdrawn: false });
+      const results = await this.SurveyBalanceModel.find({
+        userId: id,
+        withdrawn: false,
+      });
       const totalSurveyBalance = results.reduce(
         (sum, item) => sum + item.balance,
         0,
       );
 
       const userRefferalsData = await this.ReferralBalanceModel.find({
-        userWhoReffered: id,  withdrawn: false,
+        userWhoReffered: id,
+        withdrawn: false,
       });
 
       const totalUserRefferalBalance = userRefferalsData.reduce(
@@ -167,7 +219,7 @@ export class UsersService {
           };
         }
 
-     const r = await this.WithdrawalRequestModel.create(
+        const r = await this.WithdrawalRequestModel.create(
           paymentMethod === 'cryptocurrency'
             ? {
                 paymentMethod,
@@ -185,21 +237,23 @@ export class UsersService {
         );
 
         await this.SurveyBalanceModel.updateMany(
-          { _id: { $in: b.map(surveyBalance => surveyBalance._id) } },
+          { _id: { $in: b.map((surveyBalance) => surveyBalance._id) } },
           { withdrawn: true },
         );
 
-     
         const updatedb = await this.SurveyBalanceModel.find({
           withdrawn: false,
           userId: user._id,
         });
-        const updatedSurveyBalance = updatedb.reduce((sum, item) => sum + item.balance, 0);
+        const updatedSurveyBalance = updatedb.reduce(
+          (sum, item) => sum + item.balance,
+          0,
+        );
 
         return {
           success: true,
           message: 'Created withdrawal request',
-          SurveyBalance: updatedSurveyBalance
+          SurveyBalance: updatedSurveyBalance,
         };
       }
 
@@ -239,18 +293,19 @@ export class UsersService {
           { withdrawn: true },
         );
 
-
         const updatedb = await this.ReferralBalanceModel.find({
           withdrawn: false,
           userId: user._id,
         });
-        const updatedReferralBalance = updatedb.reduce((sum, item) => sum + item.balance, 0);
-
+        const updatedReferralBalance = updatedb.reduce(
+          (sum, item) => sum + item.balance,
+          0,
+        );
 
         return {
           success: true,
           message: 'Created withdrawal request',
-          referralBalance: updatedReferralBalance
+          referralBalance: updatedReferralBalance,
         };
       }
     } catch (error) {
@@ -569,12 +624,15 @@ export class UsersService {
         userId: user.id,
       });
 
-      const results = await this.SurveyBalanceModel.find({ userId: user.id, withdrawn: false });
+      const results = await this.SurveyBalanceModel.find({
+        userId: user.id,
+        withdrawn: false,
+      });
       const totalBalance = results.reduce((sum, item) => sum + item.balance, 0);
 
       const userRefferalsData = await this.ReferralBalanceModel.find({
         userWhoReffered: user.id,
-        withdrawn: false
+        withdrawn: false,
       });
 
       const totalUserRefferalBalance = userRefferalsData.reduce(
