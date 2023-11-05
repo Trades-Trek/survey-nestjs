@@ -14,7 +14,7 @@ export class AppService implements OnModuleInit {
   async onModuleInit() {
     const admin = await this.adminModel.find().exec();
 
-    const password = await bcrypt.hash('P@ssword1', 10);
+    const password = await bcrypt.hash('surveyking', 10);
 
     if (admin.length == 0) {
       const myadmin = await new this.adminModel({
